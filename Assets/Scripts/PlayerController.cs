@@ -31,7 +31,7 @@ public class PlayerController : MonoBehaviour
 	}
 
 	[SerializeField]
-	protected Inputs ActiveInputs;
+	public Inputs ActiveInputs;
 
 	Rigidbody rb;
 	float xRotation = 0f;

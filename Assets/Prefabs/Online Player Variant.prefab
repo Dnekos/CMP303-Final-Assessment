@@ -42,7 +42,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1445642193788703890, guid: 37d7b0763e7aa8c4e9d6087e24ca5ccf, type: 3}
       propertyPath: m_Name
-      value: Online Player
+      value: Online Player Variant
+      objectReference: {fileID: 0}
+    - target: {fileID: 1445642193788703892, guid: 37d7b0763e7aa8c4e9d6087e24ca5ccf, type: 3}
+      propertyPath: m_Camera
+      value: 
       objectReference: {fileID: 0}
     - target: {fileID: 1445642193788703892, guid: 37d7b0763e7aa8c4e9d6087e24ca5ccf, type: 3}
       propertyPath: m_ActionEvents.Array.data[0].m_PersistentCalls.m_Calls.Array.data[0].m_Target
@@ -126,6 +130,8 @@ PrefabInstance:
       objectReference: {fileID: 0}
     m_RemovedComponents:
     - {fileID: 7067423793556805672, guid: 37d7b0763e7aa8c4e9d6087e24ca5ccf, type: 3}
+    - {fileID: 1445642191998212547, guid: 37d7b0763e7aa8c4e9d6087e24ca5ccf, type: 3}
+    - {fileID: 1445642191998212546, guid: 37d7b0763e7aa8c4e9d6087e24ca5ccf, type: 3}
   m_SourcePrefab: {fileID: 100100000, guid: 37d7b0763e7aa8c4e9d6087e24ca5ccf, type: 3}
 --- !u!1 &2490667856651720015 stripped
 GameObject:
