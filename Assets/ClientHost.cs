@@ -58,8 +58,16 @@ public class ClientHost : MonoBehaviour
 					byte[] bytes = new byte[client.ReceiveBufferSize];
 					stream.Read(bytes, 0, (int)client.ReceiveBufferSize);
 
-					Debug.Log(System.Text.Encoding.Default.GetString(bytes));
-					player.ActiveInputs = JsonUtility.FromJson<PlayerController.Inputs>(System.Text.Encoding.Default.GetString(bytes));
+					foreach (string packet in System.Text.Encoding.Default.GetString(bytes).Split('\n'))
+					{
+						string[] splitPacket = packet.Split(new char[] { ':' }, 2);
+						switch (splitPacket[0])
+						{
+							case "PlayerController+Inputs":
+								player.ActiveInputs = JsonUtility.FromJson<PlayerController.Inputs>(splitPacket[1]);//, System.Type.GetType(splitPacket[0]));
+								break;
+						}
+					}
 				}
 			}
 				
@@ -74,7 +82,7 @@ public class ClientHost : MonoBehaviour
 				//byte[] sending = System.Text.Encoding.Default.GetBytes(str);
 				//clientStream.Write(sending,0,sending.Length);
 
-				string jsoninputs =  JsonUtility.ToJson(player.ActiveInputs);
+				string jsoninputs = player.ActiveInputs.GetType()+ ":" +JsonUtility.ToJson(player.ActiveInputs) + "\n";
 				byte[] buffer = System.Text.Encoding.Default.GetBytes(jsoninputs);
 				clientStream.Write(buffer, 0, buffer.Length);
 				//writer.Write();

@@ -48,7 +48,17 @@ public class ServerManager : MonoBehaviour
 				stream.Read(bytes, 0, (int)client.ReceiveBufferSize);
 
 				Debug.Log(System.Text.Encoding.Default.GetString(bytes));
-				player.ActiveInputs = JsonUtility.FromJson<PlayerController.Inputs>(System.Text.Encoding.Default.GetString(bytes));
+
+				foreach (string packet in System.Text.Encoding.Default.GetString(bytes).Split('\n'))
+				{
+					string[] splitPacket = packet.Split(new char[] { ':' }, 2);
+					switch (splitPacket[0])
+					{
+						case "PlayerController+Inputs":
+							player.ActiveInputs = JsonUtility.FromJson<PlayerController.Inputs>(splitPacket[1]);//, System.Type.GetType(splitPacket[0]));
+							break;
+					}
+				}
 			}
 		}
 

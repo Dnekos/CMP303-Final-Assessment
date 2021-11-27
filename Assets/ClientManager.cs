@@ -39,7 +39,7 @@ public class ClientManager : MonoBehaviour
 
 			if (player != null)
 			{
-				string jsoninputs = JsonUtility.ToJson(player.ActiveInputs);
+				string jsoninputs = player.ActiveInputs.GetType() + ":" + JsonUtility.ToJson(player.ActiveInputs) + "\n";
 				byte[] buffer = System.Text.Encoding.Default.GetBytes(jsoninputs);
 				stream.Write(buffer, 0, buffer.Length);
 			}
@@ -49,7 +49,9 @@ public class ClientManager : MonoBehaviour
 				stream.Read(bytes, 0, (int)client.ReceiveBufferSize);
 
 				Debug.Log(System.Text.Encoding.Default.GetString(bytes));
-//				player.ActiveInputs = JsonUtility.FromJson<PlayerController.Inputs>(System.Text.Encoding.Default.GetString(bytes));
+				
+				
+				//player.ActiveInputs = JsonUtility.FromJson<PlayerController.Inputs>(System.Text.Encoding.Default.GetString(bytes));
 
 			}
 		}
