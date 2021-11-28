@@ -5,62 +5,77 @@ using System.Net;
 using System.IO;
 using System.Net.Sockets;
 using System.Runtime.Serialization.Formatters.Binary;
+using UnityEngine.SceneManagement;
 
-public class ServerManager : MonoBehaviour
+public class ServerManager : BaseNetworker
 {
-	public string Host = "127.0.0.1";
-	[SerializeField] int ServerPort = 4444, ClientPort = 4445;
-
-	[SerializeField] PlayerController player;
-
-	Socket soc;
 	TcpListener server;
-	TcpClient client;
-	ArrayList SocList;
-	NetworkStream clientStream;
+	List<NetworkStream> streams;
+
+	public List<TcpClient> clients;
 
 	// Start is called before the first frame update
 	void Start()
 	{
-		IPAddress address = IPAddress.Parse(Host);
+		IPAddress address = IPAddress.Parse(ServerIP);
 
 		server = new TcpListener(address, ServerPort);
 		server.Start();
+
+		clients = new List<TcpClient>();
+		streams = new List<NetworkStream>();
+
+		PlayerIndex = 0;
+	}
+	
+	public void AllGoToScene(int index)
+	{
+		Debug.Log("wut");
+		foreach (NetworkStream stream in streams)
+			if (stream.CanWrite)
+			{
+				byte[] buffer = System.Text.Encoding.Default.GetBytes("SceneChange:" + index + "," + (clients.Count + 1));
+				stream.Write(buffer, 0, buffer.Length);
+			}
+		TotalPlayers = clients.Count + 1;
+		SceneManager.LoadScene(index);
 	}
 
 	// Update is called once per frame
 	void Update()
 	{
 		if (server.Pending())
-		{
-			client = server.AcceptTcpClient();
-			Debug.Log("I found " + client.Client);
+		{ 
+			clients.Add(server.AcceptTcpClient());
+			Debug.Log("I found " + clients[clients.Count-1].Client);
+			streams.Add(clients[clients.Count - 1].GetStream());
 
+			byte[] buffer = System.Text.Encoding.Default.GetBytes("Index:"+ streams.Count);
+			streams[streams.Count-1].Write(buffer, 0, buffer.Length);
 		}
-		else
+		else if (clients.Count < 1)
 			Debug.Log("Looking for client");
-		if (client != null)
+
+		if (clients.Count > 0) // if we have clients
 		{
-			NetworkStream stream = client.GetStream();
-			if (stream.CanRead)
+			for (int i = 0; i < clients.Count;i++) // iterate through them
 			{
-				byte[] bytes = new byte[client.ReceiveBufferSize];
-				stream.Read(bytes, 0, (int)client.ReceiveBufferSize);
-
-				Debug.Log(System.Text.Encoding.Default.GetString(bytes));
-
-				foreach (string packet in System.Text.Encoding.Default.GetString(bytes).Split('\n'))
+				if (streams[i].CanRead && clients[i].Available > 0) // check if there is stuff available to read
 				{
-					string[] splitPacket = packet.Split(new char[] { ':' }, 2);
-					switch (splitPacket[0])
-					{
-						case "PlayerController+Inputs":
-							player.ActiveInputs = JsonUtility.FromJson<PlayerController.Inputs>(splitPacket[1]);//, System.Type.GetType(splitPacket[0]));
-							break;
-					}
+					byte[] bytes = new byte[clients[i].ReceiveBufferSize];
+					streams[i].Read(bytes, 0, (int)clients[i].ReceiveBufferSize); // read it
+
+					Debug.Log(System.Text.Encoding.Default.GetString(bytes));
+
+					ParseRead(bytes); // interpret the data (usually going through JSON)
+				}
+				if (AllPlayers.Length > 0 && streams[i].CanWrite) // if we can write and have players in game
+				{
+					string jsoninputs = AllPlayers[PlayerIndex].ActiveInputs.GetType() + ":" + JsonUtility.ToJson(AllPlayers[PlayerIndex].ActiveInputs) + "\n";
+					byte[] buffer = System.Text.Encoding.Default.GetBytes(jsoninputs);
+					streams[i].Write(buffer, 0, buffer.Length);
 				}
 			}
 		}
-
 	}
 }

@@ -6,29 +6,45 @@ using UnityEngine.UI;
 public class MainMenu : MonoBehaviour
 {
 	[SerializeField] InputField ipAddress;
+	[SerializeField] Button StartButton, HostBtn, JoinBtn;
+	[SerializeField] Text numplayers;
+	ServerManager host;
 
-    // Start is called before the first frame update
-    void Start()
-    {
-        
-    }
+	[SerializeField] GameObject ServerPrefab,ClientPrefab;
 
-    // Update is called once per frame
-    void Update()
-    {
-        
-    }
-
+	private void Update()
+	{
+		if (host?.clients != null )
+			numplayers.text = "Players Joined: " + host.clients.Count;
+	}
 	public void Host()
 	{
-		GameObject Networker = new GameObject("Networker");
-		Networker.AddComponent<ServerManager>().Host = ipAddress.text;
-		DontDestroyOnLoad(Networker);
+		HostBtn.interactable = false;
+		JoinBtn.interactable = false;
+
+		host = Instantiate(ServerPrefab).GetComponent<ServerManager>();
+		host.ServerIP = ipAddress.text;
+		DontDestroyOnLoad(host.gameObject);
+
+		Debug.Log(host.ServerIP);
+		StartButton.interactable = true;
 	}
 	public void Join()
 	{
-		GameObject Networker = new GameObject("Networker");
-		Networker.AddComponent<ClientManager>().Host = ipAddress.text;
+		HostBtn.interactable = false;
+		JoinBtn.interactable = false;
+
+		GameObject Networker = Instantiate(ClientPrefab);
+		Networker.GetComponent<ClientManager>().ServerIP = ipAddress.text;
 		DontDestroyOnLoad(Networker);
+
+		Debug.LogError("made client");
+
+	}
+
+	public void BeginGame()
+	{
+		Debug.Log(host);
+		host.AllGoToScene(1);
 	}
 }

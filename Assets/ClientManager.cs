@@ -5,56 +5,54 @@ using System.Net;
 using System.IO;
 using System.Net.Sockets;
 using System.Runtime.Serialization.Formatters.Binary;
+using UnityEngine.SceneManagement;
 
-public class ClientManager : MonoBehaviour
+
+public class ClientManager : BaseNetworker
 {
-	public string Host = "127.0.0.1";
-	[SerializeField] int ServerPort = 4444, ClientPort = 4445;
-
-	[SerializeField] PlayerController player;
-
-	Socket soc;
-	TcpListener server;
 	TcpClient client;
-	ArrayList SocList;
-
+	NetworkStream stream;
 
 	// Start is called before the first frame update
 	void Start()
 	{
-		IPAddress address = IPAddress.Parse(Host);
+		IPAddress address = IPAddress.Parse(ServerIP);
 
 		client = new TcpClient();
-		client.Connect(address, ServerPort);
+		if (!client.ConnectAsync(address, ServerPort).Wait(1000))
+		{
+			Debug.LogError("failed to connect");
+		}
+		else
+		{			
+			Debug.LogError("Connected");
+			stream = client.GetStream();
+		}
 	}
 
-
+	
 	// Update is called once per frame
 	void Update()
 	{
-
-		if (client.Connected)
+		if (client.Connected)	
 		{
-			NetworkStream stream = client.GetStream();
-
-			if (player != null)
+			if (AllPlayers.Length > 0 && stream.CanWrite)
 			{
-				string jsoninputs = player.ActiveInputs.GetType() + ":" + JsonUtility.ToJson(player.ActiveInputs) + "\n";
+				string jsoninputs = AllPlayers[PlayerIndex].ActiveInputs.GetType() + ":" + JsonUtility.ToJson(AllPlayers[PlayerIndex].ActiveInputs) + "\n";
 				byte[] buffer = System.Text.Encoding.Default.GetBytes(jsoninputs);
 				stream.Write(buffer, 0, buffer.Length);
 			}
-			if (stream.CanRead)
+			
+			if (stream.CanRead && client.Available > 0)
 			{
 				byte[] bytes = new byte[client.ReceiveBufferSize];
 				stream.Read(bytes, 0, (int)client.ReceiveBufferSize);
 
-				Debug.Log(System.Text.Encoding.Default.GetString(bytes));
-				
-				
-				//player.ActiveInputs = JsonUtility.FromJson<PlayerController.Inputs>(System.Text.Encoding.Default.GetString(bytes));
-
+				ParseRead(bytes);
 			}
+			
 		}
-
+		
 	}
+	
 }

@@ -10,7 +10,7 @@ public class ClientHost : MonoBehaviour
 {
 	[SerializeField] bool isServer = false;
 	[SerializeField] string Host = "127.0.0.1";
-	[SerializeField] int ServerPort = 4444, ClientPort = 4445;
+	[SerializeField] int ServerPort = 4444;
 
 	[SerializeField] PlayerController player;
 

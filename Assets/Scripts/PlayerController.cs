@@ -24,6 +24,7 @@ public class PlayerController : MonoBehaviour
 	[System.Serializable]
 	public struct Inputs
 	{
+		public int PlayerIndex;
 		public Vector2 inputDir;
 		public Vector2 LookDir;
 		public bool Shooting;
