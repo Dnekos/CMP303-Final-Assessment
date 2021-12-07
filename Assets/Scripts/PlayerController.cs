@@ -36,6 +36,7 @@ public class PlayerController : MonoBehaviour
 
 	Rigidbody rb;
 	float xRotation = 0f;
+	bool FiredSinceLastPack = false;
 
 	// Start is called before the first frame update
 	protected virtual void Start()
@@ -59,20 +60,20 @@ public class PlayerController : MonoBehaviour
 		}
 		if (ActiveInputs.Shooting)
 		{
-			heldGun.ShootProjectile(true);
+			FiredSinceLastPack = heldGun.ShootProjectile(true);
 			ActiveInputs.Shooting = false;
 		}
 	}
 
 	private void UpdateLook()
 	{
-		Vector2 LD = ActiveInputs.LookDir * Sensitivity * Time.deltaTime;
-
-		xRotation -= LD.y;
+		//Debug.LogError("deltatime = " + Time.deltaTime);
+		 
+		xRotation -= ActiveInputs.LookDir.y * Sensitivity;
 		xRotation = Mathf.Clamp(xRotation, -90f, 90f);
 		head.localRotation = Quaternion.Euler(xRotation, 0f, 0f);
 
-		transform.Rotate(Vector3.up * ActiveInputs.LookDir.x);
+		transform.Rotate(Vector3.up * ActiveInputs.LookDir.x * Sensitivity);
 	}
 
 	// Update is called once per frame
@@ -93,4 +94,36 @@ public class PlayerController : MonoBehaviour
 			rb.velocity = Vector2.zero;
 		}
 	}
+
+
+	public struct PositionalPackage
+	{
+		public int PlayerIndex;
+		public Vector3 Position;
+		public Quaternion Rotation;
+		public Quaternion HeadRotation;
+		public bool FiredGun;
+		public Vector3 RbVelocity;
+	}
+	public PositionalPackage PackUp()
+	{
+		PositionalPackage pack;
+		pack.PlayerIndex = ActiveInputs.PlayerIndex;
+		pack.Position = transform.position;
+		pack.Rotation = transform.rotation;
+		pack.HeadRotation = head.localRotation;
+		pack.RbVelocity = rb.velocity;
+		pack.FiredGun = FiredSinceLastPack;
+		FiredSinceLastPack = false;
+		return pack;
+	}
+	public void Unpack(PositionalPackage pack)
+	{
+		transform.position = pack.Position;
+		transform.rotation = pack.Rotation;
+		head.localRotation = pack.HeadRotation;
+		rb.velocity = pack.RbVelocity;
+		ActiveInputs.Shooting = pack.FiredGun;
+	}
+
 }

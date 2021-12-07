@@ -14,7 +14,7 @@ public class LocalPlayer : PlayerController
 
 	public void OnLook(InputAction.CallbackContext context)
 	{
-		ActiveInputs.LookDir = context.ReadValue<Vector2>();
+		ActiveInputs.LookDir = context.ReadValue<Vector2>() * Time.deltaTime;
 	}
 	public void OnMove(InputAction.CallbackContext context)
 	{

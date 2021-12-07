@@ -60,7 +60,7 @@ public class ServerManager : BaseNetworker
 		{
 			for (int i = 0; i < clients.Count;i++) // iterate through them
 			{
-				if (streams[i].CanRead && clients[i].Available > 0) // check if there is stuff available to read
+				if (streams[i].CanRead && streams[i].DataAvailable) // check if there is stuff available to read
 				{
 					byte[] bytes = new byte[clients[i].ReceiveBufferSize];
 					streams[i].Read(bytes, 0, (int)clients[i].ReceiveBufferSize); // read it
@@ -71,11 +71,25 @@ public class ServerManager : BaseNetworker
 				}
 				if (AllPlayers.Length > 0 && streams[i].CanWrite) // if we can write and have players in game
 				{
-					string jsoninputs = AllPlayers[PlayerIndex].ActiveInputs.GetType() + ":" + JsonUtility.ToJson(AllPlayers[PlayerIndex].ActiveInputs) + "\n";
+					string jsoninputs = "TransformPacket:" + JsonUtility.ToJson(AllPlayers[PlayerIndex].PackUp()) + "\n";
 					byte[] buffer = System.Text.Encoding.Default.GetBytes(jsoninputs);
 					streams[i].Write(buffer, 0, buffer.Length);
 				}
 			}
+		}
+	}
+	protected override void OnLevelFinishedLoading(Scene scene, LoadSceneMode mode)
+	{
+		base.OnLevelFinishedLoading(scene, mode);
+		if (scene.buildIndex == 1)
+		{
+			string clientIP = (clients[0].Client.RemoteEndPoint as IPEndPoint).Address.ToString();
+			Debug.LogError("Client is at " + clientIP);
+			Ping uping = new Ping(clientIP);
+			
+			System.Net.NetworkInformation.Ping ping = new System.Net.NetworkInformation.Ping();
+			System.Net.NetworkInformation.PingReply reply = ping.Send(clientIP);
+			Debug.LogError("Client Ping is " + reply.RoundtripTime);
 		}
 	}
 }

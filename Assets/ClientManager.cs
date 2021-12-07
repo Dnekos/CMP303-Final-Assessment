@@ -38,12 +38,12 @@ public class ClientManager : BaseNetworker
 		{
 			if (AllPlayers.Length > 0 && stream.CanWrite)
 			{
-				string jsoninputs = AllPlayers[PlayerIndex].ActiveInputs.GetType() + ":" + JsonUtility.ToJson(AllPlayers[PlayerIndex].ActiveInputs) + "\n";
+				string jsoninputs = "TransformPacket:" + JsonUtility.ToJson(AllPlayers[PlayerIndex].PackUp()) + "\n";
 				byte[] buffer = System.Text.Encoding.Default.GetBytes(jsoninputs);
 				stream.Write(buffer, 0, buffer.Length);
 			}
 			
-			if (stream.CanRead && client.Available > 0)
+			if (stream.CanRead && stream.DataAvailable)
 			{
 				byte[] bytes = new byte[client.ReceiveBufferSize];
 				stream.Read(bytes, 0, (int)client.ReceiveBufferSize);

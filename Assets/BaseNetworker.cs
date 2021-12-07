@@ -6,6 +6,9 @@ using UnityEngine.SceneManagement;
 
 public class BaseNetworker : MonoBehaviour
 {
+	static float CurrentTime;
+	static float DeltaTime;
+
 	public int PlayerIndex;
 	public int TotalPlayers;
 
@@ -25,9 +28,9 @@ public class BaseNetworker : MonoBehaviour
 			string[] splitPacket = packet.Split(new char[] { ':' }, 2);
 			switch (splitPacket[0])
 			{
-				case "PlayerController+Inputs":
-					PlayerController.Inputs ReadInputs = JsonUtility.FromJson<PlayerController.Inputs>(splitPacket[1]); // deserialize the struct
-					AllPlayers[ReadInputs.PlayerIndex].ActiveInputs = ReadInputs; // set inputs to the proper player
+				case "TransformPacket":
+					PlayerController.PositionalPackage ReadInputs = JsonUtility.FromJson<PlayerController.PositionalPackage>(splitPacket[1]); // deserialize the struct
+					AllPlayers[ReadInputs.PlayerIndex].Unpack(ReadInputs); // set transform data to the proper player
 					break;
 				case "SceneChange":
 					string[] commaindexed = splitPacket[1].Split(',');
@@ -56,13 +59,11 @@ public class BaseNetworker : MonoBehaviour
 		SceneManager.sceneLoaded -= OnLevelFinishedLoading;
 	}
 
-	void OnLevelFinishedLoading(Scene scene, LoadSceneMode mode)
+	protected virtual void OnLevelFinishedLoading(Scene scene, LoadSceneMode mode)
 	{
 		Debug.Log(scene.name);
 		if (scene.buildIndex == 1)
 		{
-			Debug.Log("Lego impression 2: HEY");
-
 			Transform spawnpoints = GameObject.Find("SpawnPoints").transform;
 			AllPlayers = new PlayerController[TotalPlayers];
 
