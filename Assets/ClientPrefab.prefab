@@ -43,9 +43,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 972de7ca648d10d4285b23bc0a44bf10, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  PlayerIndex: 0
+  TotalPlayers: 0
   ServerIP: 127.0.0.1
   ServerPort: 4444
-  player: {fileID: 0}
-  Opponents: []
+  AllPlayers: []
   PlayerPrefab: {fileID: 1445642193788703890, guid: 37d7b0763e7aa8c4e9d6087e24ca5ccf, type: 3}
   OnlinePrefab: {fileID: 2490667856651720015, guid: 7e5e028aa2a47094490e25cacdf9f607, type: 3}
+  MilisecondsBetweenSends: 200

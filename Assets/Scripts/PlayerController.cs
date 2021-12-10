@@ -21,6 +21,8 @@ public class PlayerController : MonoBehaviour
 
 	Gun heldGun;
 
+	BaseNetworker networker;
+
 	[System.Serializable]
 	public struct Inputs
 	{
@@ -34,6 +36,11 @@ public class PlayerController : MonoBehaviour
 	[SerializeField]
 	public Inputs ActiveInputs;
 
+
+	List<PositionalPackage> packages, predictions;
+	int MaxPackageLength = 4;
+
+
 	Rigidbody rb;
 	float xRotation = 0f;
 	bool FiredSinceLastPack = false;
@@ -43,10 +50,17 @@ public class PlayerController : MonoBehaviour
 	{
 		rb = GetComponent<Rigidbody>();
 		heldGun = GetComponentInChildren<Gun>();
+		networker = FindObjectOfType<BaseNetworker>();
+
+		packages = new List<PositionalPackage>();
+		predictions = new List<PositionalPackage>();
 	}
 
 	private void Update()
 	{
+		if (packages.Count > 0)
+			RunInterpolation();
+
 		UpdateLook();
 		//Debug.Log("update "+ActiveInputs.LookDir);
 
@@ -63,6 +77,50 @@ public class PlayerController : MonoBehaviour
 			FiredSinceLastPack = heldGun.ShootProjectile(true);
 			ActiveInputs.Shooting = false;
 		}
+	}
+
+	void RunInterpolation()
+	{
+		if (packages.Count < 2) // if there aren't enough to predict, just use what we have
+		{
+			ApplyPrediction(packages[packages.Count - 1]);
+			return;
+		}
+		
+		PositionalPackage prediction = packages[packages.Count - 1], // using prediction as most recent to set default values for stuff like index
+			secondRecent = packages[packages.Count - 2];
+
+		float TimeDifference = (networker.GetBufferedTime() - prediction.TimeStamp) / networker.GetSendRate(); //(networker.GetBufferedTime() - secondRecent.TimeStamp) / (prediction.TimeStamp - secondRecent.TimeStamp);//(networker.GetBufferedTime() - secondRecent.TimeStamp);
+		prediction.TimeStamp = networker.GetBufferedTime();
+
+		prediction.Position =  Vector3.LerpUnclamped(secondRecent.Position, prediction.Position, TimeDifference);
+		prediction.Rotation = Quaternion.LerpUnclamped(secondRecent.Rotation, prediction.Rotation, TimeDifference); ;
+		prediction.HeadRotation = Quaternion.LerpUnclamped(secondRecent.HeadRotation, prediction.HeadRotation, TimeDifference); ;
+		prediction.RbVelocity = Vector3.LerpUnclamped(secondRecent.RbVelocity, prediction.RbVelocity, TimeDifference); ;
+
+		predictions.Add(prediction);
+		if (predictions.Count < 3) // if there arent enough to interpolate the predictions
+		{
+			ApplyPrediction(prediction); // just apply the prediction
+			return;
+		}
+
+		PositionalPackage lastPrediction = predictions[predictions.Count - 2], secondLastPrediction = predictions[predictions.Count - 3];
+
+		
+		// double prediction
+		PositionalPackage doublePrediction = lastPrediction;
+		TimeDifference = (networker.GetBufferedTime() - lastPrediction.TimeStamp) / networker.GetSendRate();//(networker.GetBufferedTime() - secondLastPrediction.TimeStamp) / (lastPrediction.TimeStamp - secondLastPrediction.TimeStamp); //networker.GetBufferedTime() - secondLastPrediction.TimeStamp;
+		doublePrediction.Position = Vector3.LerpUnclamped(secondLastPrediction.Position, lastPrediction.Position, TimeDifference);
+		doublePrediction.Rotation = Quaternion.LerpUnclamped(secondLastPrediction.Rotation, lastPrediction.Rotation, TimeDifference); ;
+		doublePrediction.HeadRotation = Quaternion.LerpUnclamped(secondLastPrediction.HeadRotation, lastPrediction.HeadRotation, TimeDifference);
+		doublePrediction.RbVelocity = Vector3.LerpUnclamped(secondLastPrediction.RbVelocity, lastPrediction.RbVelocity, TimeDifference); ;
+
+		// average them out
+		transform.position = Vector3.Lerp(doublePrediction.Position,prediction.Position,0.5f);
+		transform.rotation = Quaternion.Slerp(doublePrediction.Rotation, prediction.Rotation, 0.5f);
+		head.rotation = Quaternion.Slerp(doublePrediction.HeadRotation, prediction.HeadRotation, 0.5f);
+		//rb.velocity = (doublePrediction.RbVelocity + prediction.RbVelocity) * 0.5f;
 	}
 
 	private void UpdateLook()
@@ -99,6 +157,7 @@ public class PlayerController : MonoBehaviour
 	public struct PositionalPackage
 	{
 		public int PlayerIndex;
+		public float TimeStamp;
 		public Vector3 Position;
 		public Quaternion Rotation;
 		public Quaternion HeadRotation;
@@ -107,11 +166,13 @@ public class PlayerController : MonoBehaviour
 	}
 	public PositionalPackage PackUp()
 	{
-		PositionalPackage pack;
+		PositionalPackage pack = new PositionalPackage();
 		pack.PlayerIndex = ActiveInputs.PlayerIndex;
+		pack.TimeStamp = networker.GetBufferedTime();
+
 		pack.Position = transform.position;
 		pack.Rotation = transform.rotation;
-		pack.HeadRotation = head.localRotation;
+		pack.HeadRotation = head.rotation;
 		pack.RbVelocity = rb.velocity;
 		pack.FiredGun = FiredSinceLastPack;
 		FiredSinceLastPack = false;
@@ -119,11 +180,18 @@ public class PlayerController : MonoBehaviour
 	}
 	public void Unpack(PositionalPackage pack)
 	{
+		ActiveInputs.Shooting = pack.FiredGun; // shooting we want to happen immediately.
+
+		packages.Add(pack);
+		if (packages.Count > 4) // if we have more than we need
+			packages.RemoveAt(0); // pop the oldest one
+	}
+
+	void ApplyPrediction(PositionalPackage pack)
+	{
 		transform.position = pack.Position;
 		transform.rotation = pack.Rotation;
 		head.localRotation = pack.HeadRotation;
-		rb.velocity = pack.RbVelocity;
-		ActiveInputs.Shooting = pack.FiredGun;
 	}
 
 }

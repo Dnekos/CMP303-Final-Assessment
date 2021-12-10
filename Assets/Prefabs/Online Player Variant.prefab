@@ -25,6 +25,7 @@ MonoBehaviour:
     m_Bits: 64
   jumpForce: 8
   ActiveInputs:
+    PlayerIndex: 0
     inputDir: {x: 0, y: 0}
     LookDir: {x: 0, y: 0}
     Shooting: 0
@@ -63,6 +64,14 @@ PrefabInstance:
     - target: {fileID: 1445642193788703892, guid: 37d7b0763e7aa8c4e9d6087e24ca5ccf, type: 3}
       propertyPath: m_ActionEvents.Array.data[3].m_PersistentCalls.m_Calls.Array.data[0].m_Target
       value: 
+      objectReference: {fileID: 0}
+    - target: {fileID: 1445642193788703893, guid: 37d7b0763e7aa8c4e9d6087e24ca5ccf, type: 3}
+      propertyPath: m_UseGravity
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1445642193788703893, guid: 37d7b0763e7aa8c4e9d6087e24ca5ccf, type: 3}
+      propertyPath: m_IsKinematic
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 1445642193788703897, guid: 37d7b0763e7aa8c4e9d6087e24ca5ccf, type: 3}
       propertyPath: m_RootOrder

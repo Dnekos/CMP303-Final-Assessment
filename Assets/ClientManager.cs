@@ -34,10 +34,23 @@ public class ClientManager : BaseNetworker
 	// Update is called once per frame
 	void Update()
 	{
+
+		if (!IsSocketConnected(client))
+		{
+			client.Close();
+			SceneManager.LoadScene(0);
+			Destroy(gameObject);
+			return;
+		}
 		if (client.Connected)	
 		{
-			if (AllPlayers.Length > 0 && stream.CanWrite)
+			
+
+
+			if (AllPlayers.Length > 0 && stream.CanWrite && GetBufferedTime() > TimeAtNextSend)
 			{
+				TimeAtNextSend += MilisecondsBetweenSends * 0.001f;
+
 				string jsoninputs = "TransformPacket:" + JsonUtility.ToJson(AllPlayers[PlayerIndex].PackUp()) + "\n";
 				byte[] buffer = System.Text.Encoding.Default.GetBytes(jsoninputs);
 				stream.Write(buffer, 0, buffer.Length);
@@ -54,5 +67,9 @@ public class ClientManager : BaseNetworker
 		}
 		
 	}
-	
+	private void OnApplicationQuit()
+	{
+		Debug.LogError("whaddup");
+		client.Close(); // make sure we close the client cleanly when closing the game
+	}
 }

@@ -56,40 +56,71 @@ public class ServerManager : BaseNetworker
 		else if (clients.Count < 1)
 			Debug.Log("Looking for client");
 
-		if (clients.Count > 0) // if we have clients
+		//if (RoundStarted)//clients.Count > 0) // if we have clients
+		//{
+		for (int i = 0; i < clients.Count; i++) // iterate through them
 		{
-			for (int i = 0; i < clients.Count;i++) // iterate through them
+			//Debug.Log("client " + i + " connected "+IsSocketConnected(clients[i]));
+			if (!IsSocketConnected(clients[i]))
 			{
-				if (streams[i].CanRead && streams[i].DataAvailable) // check if there is stuff available to read
-				{
-					byte[] bytes = new byte[clients[i].ReceiveBufferSize];
-					streams[i].Read(bytes, 0, (int)clients[i].ReceiveBufferSize); // read it
+				foreach (TcpClient client in clients)
+					client.Close();
+				SceneManager.LoadScene(0);
+				Destroy(gameObject);
+				return;
+			}
+			if (streams[i].CanRead && streams[i].DataAvailable) // check if there is stuff available to read
+			{
+				byte[] bytes = new byte[clients[i].ReceiveBufferSize];
+				streams[i].Read(bytes, 0, (int)clients[i].ReceiveBufferSize); // read it
 
-					Debug.Log(System.Text.Encoding.Default.GetString(bytes));
+				//Debug.Log(System.Text.Encoding.Default.GetString(bytes));
 
-					ParseRead(bytes); // interpret the data (usually going through JSON)
-				}
-				if (AllPlayers.Length > 0 && streams[i].CanWrite) // if we can write and have players in game
-				{
-					string jsoninputs = "TransformPacket:" + JsonUtility.ToJson(AllPlayers[PlayerIndex].PackUp()) + "\n";
-					byte[] buffer = System.Text.Encoding.Default.GetBytes(jsoninputs);
-					streams[i].Write(buffer, 0, buffer.Length);
-				}
+				ParseRead(bytes); // interpret the data (usually going through JSON)
+			}
+
+			if (AllPlayers.Length > 0 && streams[i].CanWrite && GetBufferedTime() > TimeAtNextSend) // if we can write and have players in game
+			{
+				TimeAtNextSend += MilisecondsBetweenSends * 0.001f;
+				//Debug.Log("new time is "+TimeAtNextSend);
+
+				string jsoninputs = "TransformPacket:" + JsonUtility.ToJson(AllPlayers[PlayerIndex].PackUp()) + "\n";
+				byte[] buffer = System.Text.Encoding.Default.GetBytes(jsoninputs);
+				streams[i].Write(buffer, 0, buffer.Length);
 			}
 		}
+		//}
 	}
 	protected override void OnLevelFinishedLoading(Scene scene, LoadSceneMode mode)
 	{
 		base.OnLevelFinishedLoading(scene, mode);
 		if (scene.buildIndex == 1)
 		{
-			string clientIP = (clients[0].Client.RemoteEndPoint as IPEndPoint).Address.ToString();
-			Debug.LogError("Client is at " + clientIP);
-			Ping uping = new Ping(clientIP);
-			
-			System.Net.NetworkInformation.Ping ping = new System.Net.NetworkInformation.Ping();
-			System.Net.NetworkInformation.PingReply reply = ping.Send(clientIP);
-			Debug.LogError("Client Ping is " + reply.RoundtripTime);
+			for (int i = 0; i < clients.Count; i++)
+			{
+				string clientIP = (clients[i].Client.RemoteEndPoint as IPEndPoint).Address.ToString();
+				Debug.LogError("Client is at " + clientIP);
+				Ping uping = new Ping(clientIP);
+
+				System.Net.NetworkInformation.Ping ping = new System.Net.NetworkInformation.Ping();
+				System.Net.NetworkInformation.PingReply reply = ping.Send(clientIP);
+				Debug.LogError("Client Ping is " + reply.RoundtripTime);
+
+
+				string message = "HalfPing:" + (reply.RoundtripTime * 0.5f) + "\n";
+				byte[] buffer = System.Text.Encoding.Default.GetBytes(message);
+				streams[i].Write(buffer, 0, buffer.Length);
+			}
+			HalfPingBuffer = -GetBufferedTime();
 		}
 	}
+	private void OnApplicationQuit()
+	{
+		Debug.LogError("whaddup");
+
+		// make sure we close the client cleanly when closing the game
+		foreach (TcpClient client in clients)
+			client.Close();
+	}
+
 }
