@@ -36,10 +36,7 @@ public class PlayerController : MonoBehaviour
 	[SerializeField]
 	public Inputs ActiveInputs;
 
-
 	List<PositionalPackage> packages, predictions;
-	int MaxPackageLength = 4;
-
 
 	Rigidbody rb;
 	float xRotation = 0f;
@@ -99,6 +96,10 @@ public class PlayerController : MonoBehaviour
 		prediction.RbVelocity = Vector3.LerpUnclamped(secondRecent.RbVelocity, prediction.RbVelocity, TimeDifference); ;
 
 		predictions.Add(prediction);
+		if (packages.Count > 4) // if we have more than we need
+			packages.RemoveAt(0); // pop the oldest one
+
+
 		if (predictions.Count < 3) // if there arent enough to interpolate the predictions
 		{
 			ApplyPrediction(prediction); // just apply the prediction

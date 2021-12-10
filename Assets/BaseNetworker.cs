@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.Net.Sockets;
+using System.Net.NetworkInformation;
 
 using UnityEngine.SceneManagement;
 
@@ -54,21 +55,32 @@ public class BaseNetworker : MonoBehaviour
 
 	}
 
-	// code snippet adapted from https://stackoverflow.com/questions/7650402/how-to-test-for-a-broken-connection-of-tcpclient-after-being-connected
-	protected bool IsSocketConnected(TcpClient client)
+	// adapted from https://stackoverflow.com/questions/1387459/how-to-check-if-tcpclient-connection-is-closed
+	public bool isClientConnected(TcpClient client)
 	{
-		if (client.Client.Poll(0, SelectMode.SelectWrite))
-		{
-			byte[] buff = new byte[1];
-			if (client.Client.Receive(buff, SocketFlags.Peek) == 0)
-			{
-				// Client disconnected
-				return false;
-			}
+		IPGlobalProperties ipProperties = IPGlobalProperties.GetIPGlobalProperties();
 
+		TcpConnectionInformation[] tcpConnections = ipProperties.GetActiveTcpConnections();
+
+		foreach (TcpConnectionInformation c in tcpConnections)
+		{
+			TcpState stateOfConnection = c.State;
+
+			if (c.LocalEndPoint.Equals(client.Client.LocalEndPoint) && c.RemoteEndPoint.Equals(client.Client.RemoteEndPoint))
+			{
+				if (stateOfConnection == TcpState.Established)
+				{
+					return true;
+				}
+				else
+				{
+					return false;
+				}
+			}
 		}
-		return true;
+		return false;
 	}
+
 	void OnEnable()
 	{
 		Debug.Log("Lego impression: HEY");

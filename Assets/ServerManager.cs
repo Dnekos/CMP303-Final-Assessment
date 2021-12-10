@@ -60,13 +60,13 @@ public class ServerManager : BaseNetworker
 		//{
 		for (int i = 0; i < clients.Count; i++) // iterate through them
 		{
-			//Debug.Log("client " + i + " connected "+IsSocketConnected(clients[i]));
-			if (!IsSocketConnected(clients[i]))
+			if (!isClientConnected(clients[i]))
 			{
 				foreach (TcpClient client in clients)
 					client.Close();
 				SceneManager.LoadScene(0);
 				Destroy(gameObject);
+				Cursor.lockState = CursorLockMode.None;
 				return;
 			}
 			if (streams[i].CanRead && streams[i].DataAvailable) // check if there is stuff available to read

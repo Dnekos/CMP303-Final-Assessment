@@ -35,18 +35,17 @@ public class ClientManager : BaseNetworker
 	void Update()
 	{
 
-		if (!IsSocketConnected(client))
-		{
-			client.Close();
-			SceneManager.LoadScene(0);
-			Destroy(gameObject);
-			return;
-		}
+		
 		if (client.Connected)	
 		{
-			
-
-
+			if (!isClientConnected(client))
+			{
+				client.Close();
+				SceneManager.LoadScene(0);
+				Cursor.lockState = CursorLockMode.None;
+				Destroy(gameObject);
+				return;
+			}
 			if (AllPlayers.Length > 0 && stream.CanWrite && GetBufferedTime() > TimeAtNextSend)
 			{
 				TimeAtNextSend += MilisecondsBetweenSends * 0.001f;
