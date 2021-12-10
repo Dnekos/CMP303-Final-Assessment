@@ -34,21 +34,18 @@ public class ClientManager : BaseNetworker
 	// Update is called once per frame
 	void Update()
 	{
-
-		
 		if (client.Connected)	
 		{
-			if (!isClientConnected(client))
+			if (!isClientConnected(client)) // check if the connection is broken
 			{
+				// clean up and open disconnect menu
 				client.Close();
-				SceneManager.LoadScene(0);
-				Cursor.lockState = CursorLockMode.None;
-				Destroy(gameObject);
+				SetUpDisconnect();
 				return;
 			}
 			if (AllPlayers.Length > 0 && stream.CanWrite && GetBufferedTime() > TimeAtNextSend)
 			{
-				TimeAtNextSend += MilisecondsBetweenSends * 0.001f;
+				TimeAtNextSend += GetSendRate();
 
 				string jsoninputs = "TransformPacket:" + JsonUtility.ToJson(AllPlayers[PlayerIndex].PackUp()) + "\n";
 				byte[] buffer = System.Text.Encoding.Default.GetBytes(jsoninputs);
