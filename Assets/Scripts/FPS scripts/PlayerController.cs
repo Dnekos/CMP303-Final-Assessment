@@ -110,8 +110,11 @@ public class PlayerController : MonoBehaviour
 		PositionalPackage prediction = packages[packages.Count - 1], // using prediction as most recent to set default values for stuff like index
 			secondRecent = packages[packages.Count - 2];
 
+		// Buffered time is the gametime plus half the ping subtracted by the timestamp of when the main level was loaded, so that its synched with all clients 
 		float currTime = networker.GetBufferedTime();
-		float TimeDifference = (currTime - prediction.TimeStamp) / networker.GetSendRate(); //(networker.GetBufferedTime() - secondRecent.TimeStamp) / (prediction.TimeStamp - secondRecent.TimeStamp);//(networker.GetBufferedTime() - secondRecent.TimeStamp);
+		Debug.LogError(currTime);
+
+		float TimeDifference = (currTime - prediction.TimeStamp) / (prediction.TimeStamp - secondRecent.TimeStamp);//networker.GetSendRate(); //(networker.GetBufferedTime() - secondRecent.TimeStamp) / (prediction.TimeStamp - secondRecent.TimeStamp);//(networker.GetBufferedTime() - secondRecent.TimeStamp);
 		prediction.TimeStamp = currTime;
 
 		prediction.Position =  Vector3.LerpUnclamped(secondRecent.Position, prediction.Position, TimeDifference);
@@ -129,25 +132,23 @@ public class PlayerController : MonoBehaviour
 			return;
 		}
 
+		// run a prediction against the previous two predictions
 		PositionalPackage lastPrediction = predictions[predictions.Count - 2], secondLastPrediction = predictions[predictions.Count - 3];
-
-		
-		// double prediction
 		PositionalPackage doublePrediction = lastPrediction;
-		TimeDifference = (currTime - lastPrediction.TimeStamp) / networker.GetSendRate();//(networker.GetBufferedTime() - secondLastPrediction.TimeStamp) / (lastPrediction.TimeStamp - secondLastPrediction.TimeStamp); //networker.GetBufferedTime() - secondLastPrediction.TimeStamp;
+		TimeDifference = (currTime - lastPrediction.TimeStamp) / (lastPrediction.TimeStamp - secondLastPrediction.TimeStamp);//(networker.GetBufferedTime() - secondLastPrediction.TimeStamp) / (lastPrediction.TimeStamp - secondLastPrediction.TimeStamp); //networker.GetBufferedTime() - secondLastPrediction.TimeStamp;
 		doublePrediction.Position = Vector3.LerpUnclamped(secondLastPrediction.Position, lastPrediction.Position, TimeDifference);
 		doublePrediction.Rotation = Quaternion.LerpUnclamped(secondLastPrediction.Rotation, lastPrediction.Rotation, TimeDifference); ;
 		doublePrediction.HeadRotation = Quaternion.LerpUnclamped(secondLastPrediction.HeadRotation, lastPrediction.HeadRotation, TimeDifference);
 
-		// average them out
+		// average them out to interpolate
 		transform.position = Vector3.Lerp(doublePrediction.Position,prediction.Position,0.5f);
 		transform.rotation = Quaternion.Slerp(doublePrediction.Rotation, prediction.Rotation, 0.5f);
 		head.rotation = Quaternion.Slerp(doublePrediction.HeadRotation, prediction.HeadRotation, 0.5f);
 
+		// save the position to be used when calculating hit registration
 		RecordedPositions.Add(new KeyValuePair<float, Vector3>(currTime, transform.position));
 		if (packages.Count > MaxTrackedPositions) // if we have more than we need
 			packages.RemoveAt(0); // pop the oldest one
-
 	}
 
 	private void UpdateLook()

@@ -175,7 +175,7 @@ public class ServerManager : BaseNetworker
 				Debug.Log("Client Ping is " + reply.RoundtripTime);
 
 				// tell clients what the ping is
-				string message = "HalfPing:" + (reply.RoundtripTime * 0.5f) + "\n";
+				string message = "HalfPing:" + (reply.RoundtripTime * 0.5f * 0.001) + "\n";
 				byte[] buffer = System.Text.Encoding.Default.GetBytes(message);
 				streams[i].Write(buffer, 0, buffer.Length);
 			}
