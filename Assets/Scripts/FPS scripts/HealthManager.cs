@@ -8,6 +8,7 @@ public class HealthManager : MonoBehaviour
 	public float Health = 1;
 	BaseNetworker networker;
 	Text healthtext;
+	bool isLocalPlayer;
 
 	[System.Serializable]
 	public struct HitMarker
@@ -23,10 +24,12 @@ public class HealthManager : MonoBehaviour
 	{
 		networker = FindObjectOfType<BaseNetworker>();
 		healthtext = GameObject.Find("HealthText").GetComponent<Text>();
+		isLocalPlayer = (networker.PlayerIndex == networker.GetIndex(GetComponent<PlayerController>()));
 	}
 	private void Update()
 	{
-		healthtext.text = "Health: " + Health;
+		if (isLocalPlayer)
+			healthtext.text = "Health: " + Health;
 	}
 
 	private void OnCollisionEnter(Collision collision)
@@ -50,7 +53,7 @@ public class HealthManager : MonoBehaviour
 		Health -= damage;
 		if (Health <= 0)
 		{
-			networker.SetUpDisconnect((networker.PlayerIndex == networker.GetIndex(GetComponent<PlayerController>())) ? "You Lose" : "You Win");
+			networker.SetUpDisconnect(isLocalPlayer ? "You Lose" : "You Win");
 			Destroy(gameObject);
 		}
 		Debug.Log(gameObject + "got hit for " + damage + " damage");
