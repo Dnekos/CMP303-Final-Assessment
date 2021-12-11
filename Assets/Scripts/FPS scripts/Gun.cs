@@ -28,8 +28,7 @@ public class Gun : MonoBehaviour
 	[Header("Enemy Specific")]
 	public Vector3 EnemyHeldPos;
 
-	[Header("Fire Speeds and clip"), SerializeField]
-	protected float clipSize;
+	[Header("Fire Speeds")]
 	[SerializeField, Tooltip("How far the gun is thrown")] float ThrowForce;
 	[SerializeField, Tooltip("How much the gun spins when thrown")] Vector3 AngularThrowForce;
 
@@ -39,14 +38,12 @@ public class Gun : MonoBehaviour
 	GameObject bulletPrefab;
 
 	private bool canShoot = true;
-	protected float RemainingAmmo;
 	[HideInInspector]
 	public BoxCollider col;
 
 
 	protected void Start()
 	{
-		RemainingAmmo = clipSize;
 		col = GetComponent<BoxCollider>();
 	}
 
@@ -63,15 +60,11 @@ public class Gun : MonoBehaviour
 	/// Check if user can fire a projectile, then fire a projectile
 	/// </summary>
 	/// <returns>Wether or not a projectile was fired. Needed for SC to know when to send GunshotCheck</returns>
-	public bool ShootProjectile(bool decrementAmmo = false)
+	public bool ShootProjectile()
 	{
 		// has issue where these are ran by non active objects (https://forum.unity.com/threads/playerinput-prefab-calls-action-events-when-using-player-input-manager.1120189/)
-		if (!canShoot || !gameObject.activeInHierarchy || RemainingAmmo <= 0)
+		if (!canShoot || !gameObject.activeInHierarchy)
 			return false;
-
-		if (decrementAmmo)
-			RemainingAmmo--;
-
 
 		// create bullet
 		for (int index = 0; index < PelletAmount; index++)

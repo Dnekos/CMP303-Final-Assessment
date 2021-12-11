@@ -77,6 +77,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Damage: 1
   Lifetime: 10
+  particle: {fileID: 181682708672587111, guid: debcac532fdca3846bcc03fcc1f57cff, type: 3}
 --- !u!1 &5544159815382505584
 GameObject:
   m_ObjectHideFlags: 0

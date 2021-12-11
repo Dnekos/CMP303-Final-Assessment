@@ -1,13 +1,14 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
+using UnityEngine.SceneManagement;
+
 using System.Runtime.Serialization.Formatters.Binary;
 using System.Net.Sockets;
 using System.Net.NetworkInformation;
 
-using UnityEngine.SceneManagement;
-
-public class BaseNetworker : MonoBehaviour
+public abstract class BaseNetworker : MonoBehaviour
 {
 	static float CurrentTime;
 	static float DeltaTime;
@@ -36,8 +37,7 @@ public class BaseNetworker : MonoBehaviour
 			switch (splitPacket[0]) // go to the correct messagetype
 			{
 				case "TransformPacket": // contains various data regarding positioning from another player
-					PlayerController.PositionalPackage ReadInputs = JsonUtility.FromJson<PlayerController.PositionalPackage>(splitPacket[1]); // deserialize the struct
-					AllPlayers[ReadInputs.PlayerIndex].Unpack(ReadInputs); // set transform data to the proper player
+					ApplyTransformPacketToPlayer(splitPacket[1]);
 					break;
 				case "SceneChange": // tells client to change the scene
 					string[] commaindexed = splitPacket[1].Split(',');
@@ -51,10 +51,22 @@ public class BaseNetworker : MonoBehaviour
 					PingBuffer = float.Parse(splitPacket[1]) - GetBufferedTime(); // we subtract the current time to make sure we are zeroed out with the server
 					TimeAtNextSend = GetBufferedTime();
 					break;
-
+				case "DetectedHit":
+					HealthManager.HitMarker hit = JsonUtility.FromJson<HealthManager.HitMarker>(splitPacket[1]); // deserialize the struct
+					SendHitRegistration(hit);
+					break;
+				case "ConfirmedHit":
+					HealthManager.HitMarker confirmedhit = JsonUtility.FromJson<HealthManager.HitMarker>(splitPacket[1]); // deserialize the struct
+					AllPlayers[confirmedhit.PlayerIndex].health.TakeDamage(confirmedhit.damage);
+					break;
 			}
 		}
+	}
 
+	protected virtual void ApplyTransformPacketToPlayer(string packet)
+	{
+		PlayerController.PositionalPackage ReadInputs = JsonUtility.FromJson<PlayerController.PositionalPackage>(packet); // deserialize the struct
+		AllPlayers[ReadInputs.PlayerIndex].Unpack(ReadInputs); // set transform data to the proper player
 	}
 
 	/// <summary>
@@ -84,13 +96,28 @@ public class BaseNetworker : MonoBehaviour
 	/// <summary>
 	/// sets things up client side so the user can safely exit the game
 	/// </summary>
-	protected void SetUpDisconnect()
+	public void SetUpDisconnect(string DisconnectText = "A player has disconnected from the game")
 	{
-		Instantiate(DisconnnectUI); // open disconnect menu
+		Instantiate(DisconnnectUI).GetComponentInChildren<Text>().text = DisconnectText; // open disconnect menu and set text
 		AllPlayers[PlayerIndex].enabled = false; // turn off player controls
 		Cursor.lockState = CursorLockMode.None; // enable mouse
 		Destroy(gameObject); // delete networking script so that it can't accidently write to the closed connection
 	}
+
+	public int GetIndex(PlayerController pc)
+	{
+		for (int i = 0; i < AllPlayers.Length; i++)
+		{
+			if (AllPlayers[i] == pc)
+				return i;
+		}
+		return -1;
+	}
+
+	/// <summary>
+	/// this class needs to be overrided since the clientserver won't need to go back and verify, while clients do need the server's hit verification
+	/// </summary>
+	public abstract void SendHitRegistration(HealthManager.HitMarker hit);
 
 	#region Scene Changing
 	/// <summary>

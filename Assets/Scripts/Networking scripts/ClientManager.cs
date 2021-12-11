@@ -63,9 +63,23 @@ public class ClientManager : BaseNetworker
 		}
 		
 	}
+
+	/// <summary>
+	/// the client sends a message to the server asking it to verify the hit
+	/// </summary>
+	public override void SendHitRegistration(HealthManager.HitMarker hit)
+	{
+		string jsoninputs = "DetectedHit:" + JsonUtility.ToJson(hit) + "\n";
+		byte[] buffer = System.Text.Encoding.Default.GetBytes(jsoninputs);
+		stream.Write(buffer, 0, buffer.Length);
+	}
+
 	private void OnApplicationQuit()
 	{
-		Debug.LogError("whaddup");
 		client.Close(); // make sure we close the client cleanly when closing the game
+	}
+	private void OnDestroy()
+	{
+		OnApplicationQuit();
 	}
 }

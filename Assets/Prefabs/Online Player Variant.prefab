@@ -30,6 +30,7 @@ MonoBehaviour:
     LookDir: {x: 0, y: 0}
     Shooting: 0
     Jumping: 0
+  MaxTrackedPositions: 50
 --- !u!1001 &3935955662451900893
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -37,6 +38,18 @@ PrefabInstance:
   m_Modification:
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 1445642191888402173, guid: 37d7b0763e7aa8c4e9d6087e24ca5ccf, type: 3}
+      propertyPath: m_Layer
+      value: 9
+      objectReference: {fileID: 0}
+    - target: {fileID: 1445642191895172596, guid: 37d7b0763e7aa8c4e9d6087e24ca5ccf, type: 3}
+      propertyPath: m_Layer
+      value: 9
+      objectReference: {fileID: 0}
+    - target: {fileID: 1445642191998212545, guid: 37d7b0763e7aa8c4e9d6087e24ca5ccf, type: 3}
+      propertyPath: m_Layer
+      value: 9
+      objectReference: {fileID: 0}
     - target: {fileID: 1445642191998212548, guid: 37d7b0763e7aa8c4e9d6087e24ca5ccf, type: 3}
       propertyPath: m_LocalPosition.y
       value: 0.811
@@ -44,6 +57,10 @@ PrefabInstance:
     - target: {fileID: 1445642193788703890, guid: 37d7b0763e7aa8c4e9d6087e24ca5ccf, type: 3}
       propertyPath: m_Name
       value: Online Player Variant
+      objectReference: {fileID: 0}
+    - target: {fileID: 1445642193788703890, guid: 37d7b0763e7aa8c4e9d6087e24ca5ccf, type: 3}
+      propertyPath: m_Layer
+      value: 9
       objectReference: {fileID: 0}
     - target: {fileID: 1445642193788703892, guid: 37d7b0763e7aa8c4e9d6087e24ca5ccf, type: 3}
       propertyPath: m_Camera
@@ -117,6 +134,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 2433066047826080616, guid: 37d7b0763e7aa8c4e9d6087e24ca5ccf, type: 3}
+      propertyPath: m_Layer
+      value: 9
+      objectReference: {fileID: 0}
     - target: {fileID: 3064747931061774802, guid: 37d7b0763e7aa8c4e9d6087e24ca5ccf, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0.5
@@ -136,6 +157,14 @@ PrefabInstance:
     - target: {fileID: 4676225052880225476, guid: 37d7b0763e7aa8c4e9d6087e24ca5ccf, type: 3}
       propertyPath: clipSize
       value: 30
+      objectReference: {fileID: 0}
+    - target: {fileID: 8645978541878714041, guid: 37d7b0763e7aa8c4e9d6087e24ca5ccf, type: 3}
+      propertyPath: m_Layer
+      value: 9
+      objectReference: {fileID: 0}
+    - target: {fileID: 9215138681837277109, guid: 37d7b0763e7aa8c4e9d6087e24ca5ccf, type: 3}
+      propertyPath: m_Layer
+      value: 9
       objectReference: {fileID: 0}
     m_RemovedComponents:
     - {fileID: 7067423793556805672, guid: 37d7b0763e7aa8c4e9d6087e24ca5ccf, type: 3}
