@@ -52,7 +52,7 @@ public abstract class BaseNetworker : MonoBehaviour
 					PingBuffer = float.Parse(splitPacket[1]) - GetBufferedTime(); // we subtract the current time to make sure we are zeroed out with the server
 					TimeAtNextSend = GetBufferedTime();
 					foreach (PlayerController player in AllPlayers)
-						player.Ping = float.Parse(splitPacket[1]) * 1000; // s to ms conversion is already used in GetSendRate, so we dont need it again 
+						player.Ping = Mathf.Max(1, float.Parse(splitPacket[1]) * 1000); // s to ms conversion is already used in GetSendRate, so we dont need it again. We also dont want 0 or itll mess up interpolation calculations
 					break;
 				case "DetectedHit":
 					HealthManager.HitMarker hit = JsonUtility.FromJson<HealthManager.HitMarker>(splitPacket[1]); // deserialize the struct

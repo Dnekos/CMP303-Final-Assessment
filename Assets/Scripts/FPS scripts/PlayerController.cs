@@ -45,7 +45,7 @@ public class PlayerController : MonoBehaviour
 	[Header("Networking Stuff"), Tooltip("max length of list to track player positions for purposes of serverside hit registration"), SerializeField]
 	int MaxTrackedPositions = 50;
 	public List<KeyValuePair<float, Vector3>> RecordedPositions; // key is timestamp, value is position
-	List<PositionalPackage> packages, predictions;
+	public List<PositionalPackage> packages, predictions;
 	public float Ping; // the ping is used to decrease movement issues with latency
 
 	// smaller local variables
@@ -112,58 +112,63 @@ public class PlayerController : MonoBehaviour
 
 		// Buffered time is the gametime plus half the ping subtracted by the timestamp of when the main level was loaded, so that its synched with all clients 
 		float currTime = networker.GetBufferedTime();
-		//Debug.LogError(currTime);
 
-		float TimeDifference = (currTime - prediction.TimeStamp) / (networker.GetSendRate()* Ping * 2);// //(networker.GetBufferedTime() - secondRecent.TimeStamp) / (prediction.TimeStamp - secondRecent.TimeStamp);//(networker.GetBufferedTime() - secondRecent.TimeStamp);
-		prediction.TimeStamp = currTime;
-		
-		//Debug.Log(TimeDifference + " " + ((currTime - prediction.TimeStamp) / (prediction.TimeStamp - secondRecent.TimeStamp)));
-
+		float TimeDifference = (currTime - prediction.TimeStamp - (Ping * 0.001f * 2) )/ (networker.GetSendRate());// //(networker.GetBufferedTime() - secondRecent.TimeStamp) / (prediction.TimeStamp - secondRecent.TimeStamp);//(networker.GetBufferedTime() - secondRecent.TimeStamp);
 		prediction.Position =  Vector3.LerpUnclamped(secondRecent.Position, prediction.Position, TimeDifference);
 		prediction.Rotation = Quaternion.LerpUnclamped(secondRecent.Rotation, prediction.Rotation, TimeDifference); ;
 		prediction.HeadRotation = Quaternion.LerpUnclamped(secondRecent.HeadRotation, prediction.HeadRotation, TimeDifference); ;
 
-		predictions.Add(prediction);
-		if (packages.Count > 4) // if we have more than we need
-			packages.RemoveAt(0); // pop the oldest one
-
 
 		if (predictions.Count < 3) // if there arent enough to interpolate the predictions
 		{
+			prediction.TimeStamp = currTime;
+			predictions.Add(prediction);
+			if (predictions.Count > 4) // if we have more than we need
+				predictions.RemoveAt(0); // pop the oldest one
+
+
 			ApplyPrediction(prediction); // just apply the prediction
 			return;
 		}
 
 		// run a prediction against the previous two predictions
-		PositionalPackage lastPrediction = predictions[predictions.Count - 2], secondLastPrediction = predictions[predictions.Count - 3];
-		PositionalPackage doublePrediction = lastPrediction;
+		PositionalPackage lastPrediction = predictions[predictions.Count - 1], secondLastPrediction = predictions[predictions.Count - 2];
+		PositionalPackage secondPrediction = lastPrediction, doublePrediction = prediction;
 		//TimeDifference = (currTime - lastPrediction.TimeStamp) /  (lastPrediction.TimeStamp - secondLastPrediction.TimeStamp);//(networker.GetBufferedTime() - secondLastPrediction.TimeStamp) / (lastPrediction.TimeStamp - secondLastPrediction.TimeStamp); //networker.GetBufferedTime() - secondLastPrediction.TimeStamp;
-		TimeDifference = (currTime - prediction.TimeStamp) / (Time.deltaTime * Ping * 2);
-		Debug.Log(TimeDifference + " " + ((currTime - lastPrediction.TimeStamp) / Time.deltaTime));
+		float TimeDifference2 = (currTime - lastPrediction.TimeStamp) / (Time.deltaTime);
 		
-		doublePrediction.Position = Vector3.LerpUnclamped(secondLastPrediction.Position, lastPrediction.Position, TimeDifference);
-		doublePrediction.Rotation = Quaternion.LerpUnclamped(secondLastPrediction.Rotation, lastPrediction.Rotation, TimeDifference); ;
-		doublePrediction.HeadRotation = Quaternion.LerpUnclamped(secondLastPrediction.HeadRotation, lastPrediction.HeadRotation, TimeDifference);
+		secondPrediction.Position = Vector3.LerpUnclamped(secondLastPrediction.Position, lastPrediction.Position, TimeDifference2);
+		secondPrediction.Rotation = Quaternion.LerpUnclamped(secondLastPrediction.Rotation, lastPrediction.Rotation, TimeDifference2); ;
+		secondPrediction.HeadRotation = Quaternion.LerpUnclamped(secondLastPrediction.HeadRotation, lastPrediction.HeadRotation, TimeDifference2);
 
-		Debug.DrawLine(transform.position, doublePrediction.Position, Color.blue, 0.5f);
+		// debugs for testing, dont show up in builds
 		Debug.DrawLine(transform.position, prediction.Position, Color.red, 0.5f);
-
+		Debug.DrawLine(transform.position, secondPrediction.Position, Color.blue, 0.5f);
+		Debug.Log("T1:"+ TimeDifference + " T2:" + TimeDifference2 + " " + secondPrediction.Position +" "+ prediction.Position);
 
 		// average them out to interpolate
-		transform.position = Vector3.Lerp(doublePrediction.Position,prediction.Position,0.2f);
-		transform.rotation = Quaternion.Slerp(doublePrediction.Rotation, prediction.Rotation, 0.2f);
-		head.rotation = Quaternion.Slerp(doublePrediction.HeadRotation, prediction.HeadRotation, 0.2f);
+		doublePrediction.Position = Vector3.Lerp(secondPrediction.Position, prediction.Position, 0.1f);
+		doublePrediction.Rotation= Quaternion.Slerp(secondPrediction.Rotation, prediction.Rotation, 0.1f);
+		doublePrediction.HeadRotation = Quaternion.Slerp(secondPrediction.HeadRotation, prediction.HeadRotation, 0.1f);
+		// apply
+		transform.position = doublePrediction.Position;
+		transform.rotation = doublePrediction.Rotation;
+		head.rotation = doublePrediction.HeadRotation;
+
+		doublePrediction.TimeStamp = currTime;
+		predictions.Add(doublePrediction);
+		if (predictions.Count > 4) // if we have more than we need
+			predictions.RemoveAt(0); // pop the oldest one
+
 
 		// save the position to be used when calculating hit registration
 		RecordedPositions.Add(new KeyValuePair<float, Vector3>(currTime, transform.position));
-		if (packages.Count > MaxTrackedPositions) // if we have more than we need
-			packages.RemoveAt(0); // pop the oldest one
+		if (RecordedPositions.Count > MaxTrackedPositions) // if we have more than we need
+			RecordedPositions.RemoveAt(0); // pop the oldest one
 	}
 
 	private void UpdateLook()
-	{
-		//Debug.LogError("deltatime = " + Time.deltaTime);
-		 
+	{		 
 		xRotation -= ActiveInputs.LookDir.y * Sensitivity;
 		xRotation = Mathf.Clamp(xRotation, -90f, 90f);
 		head.localRotation = Quaternion.Euler(xRotation, 0f, 0f);
@@ -180,9 +185,6 @@ public class PlayerController : MonoBehaviour
 		{
 			rb.AddForce(move.normalized * acceleration * rb.mass);
 		}
-
-		//else if (inputDir != Vector2.zero && rb.velocity.magnitude > maxSpeed)
-		//	rb.velocity = inputDir * maxSpeed;
 
 		if (rb.velocity.magnitude < minSpeed)
 		{

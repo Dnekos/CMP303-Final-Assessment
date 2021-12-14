@@ -25,7 +25,7 @@ public class ClientManager : BaseNetworker
 		}
 		else
 		{			
-			Debug.LogError("Connected");
+			Debug.Log("Connected");
 			stream = client.GetStream();
 		}
 	}

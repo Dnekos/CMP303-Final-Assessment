@@ -179,7 +179,8 @@ public class ServerManager : BaseNetworker
 				byte[] buffer = System.Text.Encoding.Default.GetBytes(message);
 				streams[i].Write(buffer, 0, buffer.Length);
 
-				AllPlayers[i + 1].Ping = reply.RoundtripTime * 0.5f;
+
+				AllPlayers[i + 1].Ping = Mathf.Max(1, reply.RoundtripTime * 0.5f); // we want 1 to be the min for this as this Ping is used for interpolation smoothing
 			}
 			// ping buffer is the ping with respect to the server - time ar level load. So for the server itself the ping is 0
 			PingBuffer = -GetBufferedTime();
