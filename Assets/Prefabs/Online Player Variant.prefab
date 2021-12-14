@@ -31,6 +31,8 @@ MonoBehaviour:
     Shooting: 0
     Jumping: 0
   MaxTrackedPositions: 50
+  Ping: 0
+  health: {fileID: 0}
 --- !u!1001 &3935955662451900893
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -85,6 +87,10 @@ PrefabInstance:
     - target: {fileID: 1445642193788703893, guid: 37d7b0763e7aa8c4e9d6087e24ca5ccf, type: 3}
       propertyPath: m_UseGravity
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1445642193788703893, guid: 37d7b0763e7aa8c4e9d6087e24ca5ccf, type: 3}
+      propertyPath: m_Interpolate
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 1445642193788703893, guid: 37d7b0763e7aa8c4e9d6087e24ca5ccf, type: 3}
       propertyPath: m_IsKinematic

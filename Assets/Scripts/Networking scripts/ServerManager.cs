@@ -178,6 +178,8 @@ public class ServerManager : BaseNetworker
 				string message = "HalfPing:" + (reply.RoundtripTime * 0.5f * 0.001) + "\n";
 				byte[] buffer = System.Text.Encoding.Default.GetBytes(message);
 				streams[i].Write(buffer, 0, buffer.Length);
+
+				AllPlayers[i + 1].Ping = reply.RoundtripTime * 0.5f;
 			}
 			// ping buffer is the ping with respect to the server - time ar level load. So for the server itself the ping is 0
 			PingBuffer = -GetBufferedTime();

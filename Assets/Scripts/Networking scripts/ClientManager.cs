@@ -19,7 +19,7 @@ public class ClientManager : BaseNetworker
 		IPAddress address = IPAddress.Parse(ServerIP);
 
 		client = new TcpClient();
-		if (!client.ConnectAsync(address, ServerPort).Wait(1000))
+		if (!client.ConnectAsync(address, ServerPort).Wait(5000))
 		{
 			Debug.LogError("failed to connect");
 		}

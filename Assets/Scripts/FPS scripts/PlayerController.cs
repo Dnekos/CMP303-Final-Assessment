@@ -19,7 +19,6 @@ public class PlayerController : MonoBehaviour
 	[Header("Jumping"), SerializeField]
 	float jumpForce; //lmao goku game
 
-
 	[System.Serializable]
 	public struct Inputs
 	{
@@ -47,6 +46,7 @@ public class PlayerController : MonoBehaviour
 	int MaxTrackedPositions = 50;
 	public List<KeyValuePair<float, Vector3>> RecordedPositions; // key is timestamp, value is position
 	List<PositionalPackage> packages, predictions;
+	public float Ping; // the ping is used to decrease movement issues with latency
 
 	// smaller local variables
 	float xRotation = 0f;
@@ -112,10 +112,12 @@ public class PlayerController : MonoBehaviour
 
 		// Buffered time is the gametime plus half the ping subtracted by the timestamp of when the main level was loaded, so that its synched with all clients 
 		float currTime = networker.GetBufferedTime();
-		Debug.LogError(currTime);
+		//Debug.LogError(currTime);
 
-		float TimeDifference = (currTime - prediction.TimeStamp) / (prediction.TimeStamp - secondRecent.TimeStamp);//networker.GetSendRate(); //(networker.GetBufferedTime() - secondRecent.TimeStamp) / (prediction.TimeStamp - secondRecent.TimeStamp);//(networker.GetBufferedTime() - secondRecent.TimeStamp);
+		float TimeDifference = (currTime - prediction.TimeStamp) / (networker.GetSendRate()* Ping * 2);// //(networker.GetBufferedTime() - secondRecent.TimeStamp) / (prediction.TimeStamp - secondRecent.TimeStamp);//(networker.GetBufferedTime() - secondRecent.TimeStamp);
 		prediction.TimeStamp = currTime;
+		
+		//Debug.Log(TimeDifference + " " + ((currTime - prediction.TimeStamp) / (prediction.TimeStamp - secondRecent.TimeStamp)));
 
 		prediction.Position =  Vector3.LerpUnclamped(secondRecent.Position, prediction.Position, TimeDifference);
 		prediction.Rotation = Quaternion.LerpUnclamped(secondRecent.Rotation, prediction.Rotation, TimeDifference); ;
@@ -135,15 +137,22 @@ public class PlayerController : MonoBehaviour
 		// run a prediction against the previous two predictions
 		PositionalPackage lastPrediction = predictions[predictions.Count - 2], secondLastPrediction = predictions[predictions.Count - 3];
 		PositionalPackage doublePrediction = lastPrediction;
-		TimeDifference = (currTime - lastPrediction.TimeStamp) / (lastPrediction.TimeStamp - secondLastPrediction.TimeStamp);//(networker.GetBufferedTime() - secondLastPrediction.TimeStamp) / (lastPrediction.TimeStamp - secondLastPrediction.TimeStamp); //networker.GetBufferedTime() - secondLastPrediction.TimeStamp;
+		//TimeDifference = (currTime - lastPrediction.TimeStamp) /  (lastPrediction.TimeStamp - secondLastPrediction.TimeStamp);//(networker.GetBufferedTime() - secondLastPrediction.TimeStamp) / (lastPrediction.TimeStamp - secondLastPrediction.TimeStamp); //networker.GetBufferedTime() - secondLastPrediction.TimeStamp;
+		TimeDifference = (currTime - prediction.TimeStamp) / (Time.deltaTime * Ping * 2);
+		Debug.Log(TimeDifference + " " + ((currTime - lastPrediction.TimeStamp) / Time.deltaTime));
+		
 		doublePrediction.Position = Vector3.LerpUnclamped(secondLastPrediction.Position, lastPrediction.Position, TimeDifference);
 		doublePrediction.Rotation = Quaternion.LerpUnclamped(secondLastPrediction.Rotation, lastPrediction.Rotation, TimeDifference); ;
 		doublePrediction.HeadRotation = Quaternion.LerpUnclamped(secondLastPrediction.HeadRotation, lastPrediction.HeadRotation, TimeDifference);
 
+		Debug.DrawLine(transform.position, doublePrediction.Position, Color.blue, 0.5f);
+		Debug.DrawLine(transform.position, prediction.Position, Color.red, 0.5f);
+
+
 		// average them out to interpolate
-		transform.position = Vector3.Lerp(doublePrediction.Position,prediction.Position,0.5f);
-		transform.rotation = Quaternion.Slerp(doublePrediction.Rotation, prediction.Rotation, 0.5f);
-		head.rotation = Quaternion.Slerp(doublePrediction.HeadRotation, prediction.HeadRotation, 0.5f);
+		transform.position = Vector3.Lerp(doublePrediction.Position,prediction.Position,0.2f);
+		transform.rotation = Quaternion.Slerp(doublePrediction.Rotation, prediction.Rotation, 0.2f);
+		head.rotation = Quaternion.Slerp(doublePrediction.HeadRotation, prediction.HeadRotation, 0.2f);
 
 		// save the position to be used when calculating hit registration
 		RecordedPositions.Add(new KeyValuePair<float, Vector3>(currTime, transform.position));

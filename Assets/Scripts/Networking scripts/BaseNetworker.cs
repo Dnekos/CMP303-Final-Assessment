@@ -25,6 +25,7 @@ public abstract class BaseNetworker : MonoBehaviour
 	[SerializeField] GameObject DisconnnectUI;
 
 	protected float PingBuffer = 0; // helps get the time with respect to the time it takes for a message to be sent to the server
+	//public float HalfPing = 0; // unneeded
 	[SerializeField, Tooltip("How many frames in between sending data to the server or vice versa")] protected float MilisecondsBetweenSends = 30;
 	protected float TimeAtNextSend;
 
@@ -50,6 +51,8 @@ public abstract class BaseNetworker : MonoBehaviour
 				case "HalfPing": // message contains the buffer required to synch times, also serves as official start of the round
 					PingBuffer = float.Parse(splitPacket[1]) - GetBufferedTime(); // we subtract the current time to make sure we are zeroed out with the server
 					TimeAtNextSend = GetBufferedTime();
+					foreach (PlayerController player in AllPlayers)
+						player.Ping = float.Parse(splitPacket[1]) * 1000; // s to ms conversion is already used in GetSendRate, so we dont need it again 
 					break;
 				case "DetectedHit":
 					HealthManager.HitMarker hit = JsonUtility.FromJson<HealthManager.HitMarker>(splitPacket[1]); // deserialize the struct
